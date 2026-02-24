@@ -95,6 +95,12 @@ function pay(amount){
 
 window.onload = renderProducts;
 
+setInterval(() => {
+    fetch(window.location.href, { method: "HEAD" })
+    .then(() => location.reload())
+    .catch(() => {});
+}, 8000);
+
 </script>
 
 </body>
