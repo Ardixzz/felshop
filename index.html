@@ -8,117 +8,118 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-
 </head>
+
 <body class="bg-slate-100">
 
-<!-- HEADER -->
-<nav class="bg-white shadow p-4 flex justify-between items-center">
-    <h1 id="display-shop-name" class="font-bold text-xl">Loading...</h1>
+<nav class="bg-white shadow p-4">
+    <h1 id="shop-name" class="text-xl font-bold">Loading...</h1>
 </nav>
 
-<!-- PRODUCT GRID -->
 <main class="max-w-6xl mx-auto p-6">
-    <div id="product-grid" class="grid grid-cols-2 md:grid-cols-3 gap-6"></div>
+    <div id="product-grid" class="grid md:grid-cols-3 grid-cols-2 gap-6"></div>
 </main>
 
 <script>
-/* =========================
-   SUPABASE CONFIG
-========================= */
+
+/* ================= CONFIG ================= */
+
 const SB_URL = "https://eymduelgajpuvzxhnffu.supabase.co";
 const SB_KEY = "sb_publishable_Ub_hXFYMVpcPu73e-fSdmg_jK3OOe2p";
+
 const supabaseClient = supabase.createClient(SB_URL, SB_KEY);
 
-/* =========================
-   PAKASIR CONFIG
-========================= */
+/* Pakasir config */
 const PAKASIR_SLUG = "shop-ardii-web-id";
 
-/* =========================
-   STATE
-========================= */
+/* ================= STATE ================= */
+
 let state = {
     shopName: "Premium Store",
     products: []
 };
 
-/* =========================
-   INIT
-========================= */
-async function init() {
-    await fetchShopSettings();
-    await fetchProducts();
-    renderProducts();
-}
+/* ================= INIT ================= */
 
-async function fetchShopSettings() {
+window.onload = async () => {
+    await loadShop();
+    await loadProducts();
+    renderProducts();
+};
+
+/* ================= DATA FETCH ================= */
+
+async function loadShop() {
     const { data } = await supabaseClient
-        .from('shop_settings')
-        .select('*')
-        .eq('id', 1)
+        .from("shop_settings")
+        .select("*")
+        .eq("id", 1)
         .single();
 
     if (data) {
         state.shopName = data.shop_name;
-        document.getElementById('display-shop-name').innerText = state.shopName;
+        document.getElementById("shop-name").innerText = state.shopName;
     }
 }
 
-async function fetchProducts() {
+async function loadProducts() {
     const { data } = await supabaseClient
-        .from('products')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .from("products")
+        .select("*")
+        .order("created_at", { ascending: false });
 
     if (data) state.products = data;
 }
 
-/* =========================
-   RENDER
-========================= */
+/* ================= RENDER ================= */
+
 function renderProducts() {
-    const grid = document.getElementById('product-grid');
+    const grid = document.getElementById("product-grid");
 
     if (state.products.length === 0) {
-        grid.innerHTML = "<p class='col-span-full text-center text-gray-500'>Belum ada produk.</p>";
+        grid.innerHTML = `<p class="col-span-full text-center text-gray-500">
+        Belum ada produk
+        </p>`;
         return;
     }
 
     grid.innerHTML = state.products.map((p, idx) => `
         <div class="bg-white rounded-xl shadow p-4 flex flex-col">
-            <img src="${p.image}" class="w-full h-40 object-cover rounded-lg mb-3">
+            <img src="${p.image}" class="h-40 w-full object-cover rounded-lg mb-3">
+
             <h3 class="font-bold">${p.name}</h3>
-            <p class="text-sm text-gray-500 mb-2">${p.description || ''}</p>
-            <p class="text-green-600 font-bold text-lg mb-3">
-                Rp ${Number(p.price).toLocaleString('id-ID')}
+
+            <p class="text-gray-500 text-sm mb-2">
+                ${p.description || ""}
             </p>
+
+            <div class="text-green-600 font-bold text-lg mb-3">
+                Rp ${Number(p.price).toLocaleString("id-ID")}
+            </div>
+
             <button onclick="payNow(${idx})"
-                class="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-bold flex items-center justify-center gap-2">
-                <i class="fas fa-credit-card"></i> Bayar
+                class="bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg font-bold">
+
+                <i class="fas fa-credit-card mr-2"></i>
+                Bayar
             </button>
         </div>
-    `).join('');
+    `).join("");
 }
 
-/* =========================
-   PAYMENT FUNCTION
-========================= */
+/* ================= PAYMENT ================= */
+
 function payNow(idx) {
     const product = state.products[idx];
 
     const orderId = "INV" + Date.now();
     const amount = Number(product.price);
 
-    let paymentUrl = `https://app.pakasir.com/pay/${PAKASIR_SLUG}/${amount}?order_id=${orderId}`;
+    const url = `https://app.pakasir.com/pay/${PAKASIR_SLUG}/${amount}?order_id=${orderId}`;
 
-    // Kalau mau QRIS only aktifkan ini:
-    // paymentUrl += "&qris_only=1";
-
-    window.open(paymentUrl, "_blank");
+    window.open(url, "_blank");
 }
 
-window.onload = init;
 </script>
 
 </body>
